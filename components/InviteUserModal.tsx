@@ -13,9 +13,23 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClos
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.EXECUTIVE);
   const [isSending, setIsSending] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setRole(UserRole.EXECUTIVE);
+    setIsSuccess(false);
+    setSendError(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleSendEmail = async () => {
     if (!name || !email) return;
@@ -41,19 +55,19 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClos
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        throw new Error('Erro de comunicação com o servidor. Resposta inválida.');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Falha ao enviar e-mail');
       }
 
       // Success
-      alert('Convite enviado com sucesso!');
-      onClose();
-      setName('');
-      setEmail('');
-      setSendError(null);
-      setRole(UserRole.EXECUTIVE);
+      setIsSuccess(true);
     } catch (err: any) {
       console.error(err);
       setSendError(err.message || 'Erro ao enviar e-mail. Verifique se o backend está configurado.');
@@ -66,7 +80,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClos
             registrationLink,
           });
         window.location.href = mailtoHref(email, content.subject, content.body);
-        onClose();
+        handleClose();
       }
     } finally {
       setIsSending(false);
@@ -81,10 +95,37 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClos
              <div className="p-2 bg-white/10 rounded-lg"><Mail size={20} /></div>
              <h3 className="text-xl font-bold">Convidar Novo Usuário</h3>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white"><X size={24} /></button>
+          <button onClick={handleClose} className="text-white/70 hover:text-white"><X size={24} /></button>
         </div>
 
         <div className="p-8 overflow-y-auto">
+          {isSuccess ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <Mail size={40} className="text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Convite Enviado!</h3>
+              <p className="text-gray-600 mb-8 max-w-md">
+                O convite foi enviado com sucesso para <strong>{email}</strong>. 
+                O usuário receberá o link de cadastro em instantes.
+              </p>
+              
+              <div className="flex gap-4">
+                <button 
+                  onClick={handleClose}
+                  className="px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                >
+                  Fechar
+                </button>
+                <button 
+                  onClick={resetForm}
+                  className="px-6 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-gray-800 transition-colors"
+                >
+                  Enviar Novo Convite
+                </button>
+              </div>
+            </div>
+          ) : (
              <div className="space-y-6">
                 <p className="text-gray-600">Preencha os dados para enviar um convite automático via e-mail.</p>
                 
@@ -144,6 +185,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClos
                     </div>
                 )}
              </div>
+          )}
         </div>
       </div>
     </div>
