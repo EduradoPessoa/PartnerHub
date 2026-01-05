@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Opportunity, CommissionRecord, User, OpportunityStatus, CommissionStatus } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { Wallet, Users, TrendingUp, AlertCircle, MapPin, UserPlus, Trophy, Cpu, ArrowRight } from 'lucide-react';
-import { InviteExecutiveModal } from './InviteExecutiveModal';
+import { InviteUserModal } from './InviteUserModal';
 import { OpportunityDetailsModal } from './OpportunityDetailsModal';
 
 interface AdminDashboardProps {
