@@ -139,22 +139,32 @@ export const loadUsers = async (): Promise<User[]> => {
   }
 
   // --- AUTO-INSERT LOGIC (SEED) & FAILSAFE ---
-  // Verifica se o Admin Master existe.
-  // Usamos try/catch no find para evitar crash se vierem dados mal formatados do banco
-  let adminExists = false;
+  // Verifica se o Admin Master existe pelo email (independente do ID ou Nome)
+  // Usamos try/catch para evitar crash se vierem dados mal formatados
   try {
-      adminExists = users.some(u => u.email && u.email.toLowerCase() === MASTER_ADMIN.email.toLowerCase());
+      const masterUserIndex = users.findIndex(u => u.email && u.email.toLowerCase() === MASTER_ADMIN.email.toLowerCase());
+
+      if (masterUserIndex >= 0) {
+          // Usuário encontrado com o email mestre. 
+          // RECUPERAÇÃO DE ACESSO: Força a role para ADMIN se não for.
+          if (users[masterUserIndex].role !== UserRole.ADMIN) {
+              console.warn("Master Admin found with incorrect role. Fixing privileges...");
+              users[masterUserIndex].role = UserRole.ADMIN;
+              // Salva a correção imediatamente
+              saveUsers(users);
+          }
+      } else {
+          console.log("Master Admin not found in API data. Injecting into memory...");
+          // Injeta no início da lista para garantir acesso imediato
+          users = [MASTER_ADMIN, ...users];
+          
+          // Tenta salvar para corrigir o servidor
+          saveUsers(users).catch(err => console.error("Auto-seed failed", err)); 
+      }
   } catch (e) {
       console.warn("Error checking for admin user", e);
-  }
-  
-  if (!adminExists) {
-      console.log("Master Admin not found in API data. Injecting into memory...");
-      // Injeta no início da lista para garantir acesso imediato
+      // Em caso de erro crítico na validação, injeta o admin por segurança
       users = [MASTER_ADMIN, ...users];
-      
-      // Tenta salvar para corrigir o servidor, mas não bloqueia o login se falhar
-      saveUsers(users).catch(err => console.error("Auto-seed failed", err)); 
   }
 
   return users;
