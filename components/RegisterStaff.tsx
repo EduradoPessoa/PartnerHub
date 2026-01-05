@@ -6,7 +6,8 @@ import { loadUsers, saveUsers } from '../services/mockData';
 export const RegisterStaff: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [staffSubRole, setStaffSubRole] = useState<'ENGENHEIRO' | 'PROGRAMADOR' | 'ADMINISTRADOR' | 'FINANCEIRO'>('ENGENHEIRO');
+  // Use UserRole directly for the main role
+  const [role, setRole] = useState<UserRole>(UserRole.ENGENHEIRO);
   const [location, setLocation] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -20,10 +21,9 @@ export const RegisterStaff: React.FC = () => {
       id: `staff_${Math.random().toString(36).substr(2, 9)}`,
       name,
       email,
-      role: UserRole.STAFF,
+      role: role, // Directly assign the selected role
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff`,
       location,
-      staffSubRole,
     };
     await saveUsers([newUser, ...users]);
     setSaving(false);
@@ -48,13 +48,13 @@ export const RegisterStaff: React.FC = () => {
                  value={email} onChange={e => setEmail(e.target.value)} />
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Sub-Perfil</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Função / Perfil</label>
           <select className="w-full bg-gray-50 border-none rounded-xl p-4 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none"
-                  value={staffSubRole} onChange={e => setStaffSubRole(e.target.value as any)}>
-            <option value="ENGENHEIRO">Engenheiro</option>
-            <option value="PROGRAMADOR">Programador</option>
-            <option value="ADMINISTRADOR">Administrador</option>
-            <option value="FINANCEIRO">Financeiro</option>
+                  value={role} onChange={e => setRole(e.target.value as UserRole)}>
+            <option value={UserRole.ENGENHEIRO}>Engenheiro</option>
+            <option value={UserRole.PROGRAMADOR}>Programador</option>
+            <option value={UserRole.FINANCEIRO}>Financeiro</option>
+            <option value={UserRole.ADMIN}>Administrador</option>
           </select>
         </div>
         <div>

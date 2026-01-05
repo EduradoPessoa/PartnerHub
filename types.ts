@@ -1,7 +1,11 @@
 export enum UserRole {
   ADMIN = 'ADMIN',
   EXECUTIVE = 'EXECUTIVE',
-  STAFF = 'STAFF' // Engenheiros de Software
+  EXECUTIVE_LIDER = 'EXECUTIVE_LIDER',
+  ENGENHEIRO = 'ENGENHEIRO',
+  PROGRAMADOR = 'PROGRAMADOR',
+  FINANCEIRO = 'FINANCEIRO',
+  STAFF = 'STAFF' // Deprecated, keeping for backward compatibility during migration
 }
 
 export interface PjDetails {
@@ -29,7 +33,8 @@ export interface User {
   location?: string; // e.g. "São Paulo, SP"
   joinedAt?: string;
   pjDetails?: PjDetails;
-  staffSubRole?: 'ENGENHEIRO' | 'PROGRAMADOR' | 'ADMINISTRADOR' | 'FINANCEIRO';
+  leaderId?: string; // ID of the EXECUTIVE_LIDER (for executives)
+  staffSubRole?: string; // Deprecated
 }
 
 export enum OpportunityStatus {

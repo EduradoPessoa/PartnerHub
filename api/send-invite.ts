@@ -1,26 +1,26 @@
 import { Resend } from 'resend';
 
-// Initialize Resend with the API key from environment variables or fallback to the provided key
-// Note: In production, always prefer environment variables.
-const apiKey = process.env.RESEND_API_KEY || 're_K6DgMr5T_89GhgRJMgdwteuLMDTV2MvDo';
-const resend = new Resend(apiKey);
-
-export default async function handler(request: Request) {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+export default async function handler(req: any, res: any) {
+  // Check for POST method
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.error('RESEND_API_KEY is not defined in environment variables');
+    return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+  }
+
+  const resend = new Resend(apiKey);
+
   try {
-    const { name, email, role, registrationUrl } = await request.json();
+    // In Vercel Node.js runtime, body is automatically parsed
+    const { name, email, role, registrationUrl } = req.body || {};
 
     if (!name || !email || !role || !registrationUrl) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Using the default testing domain provided by Resend (onboarding@resend.dev)
@@ -98,21 +98,12 @@ export default async function handler(request: Request) {
 
     if (error) {
       console.error('Resend error:', error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ error: error.message });
     }
 
-    return new Response(JSON.stringify({ success: true, id: data?.id }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(200).json({ success: true, id: data?.id });
   } catch (error) {
     console.error('Server error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

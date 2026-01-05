@@ -25,12 +25,45 @@ const DEFAULT_USERS: User[] = [
     avatar: 'https://ui-avatars.com/api/?name=Admin+Demo&background=0f172a&color=fff'
   },
   {
+    id: 'lider1',
+    name: 'Roberto Director',
+    role: UserRole.EXECUTIVE_LIDER,
+    email: 'roberto@phoenyx.com',
+    location: 'Rio de Janeiro, RJ',
+    avatar: 'https://ui-avatars.com/api/?name=Roberto+Director&background=7c3aed&color=fff'
+  },
+  {
     id: 'exec1',
     name: 'João Vendedor',
     role: UserRole.EXECUTIVE,
     email: 'joao@phoenyx.com',
     location: 'São Paulo, SP',
+    leaderId: 'lider1', // Linked to Roberto
     avatar: 'https://ui-avatars.com/api/?name=Joao+Vendedor&background=ea580c&color=fff'
+  },
+  {
+    id: 'eng1',
+    name: 'Ana Tech',
+    role: UserRole.ENGENHEIRO,
+    email: 'ana@phoenyx.com',
+    location: 'Remote',
+    avatar: 'https://ui-avatars.com/api/?name=Ana+Tech&background=db2777&color=fff'
+  },
+  {
+    id: 'dev1',
+    name: 'Carlos Coder',
+    role: UserRole.PROGRAMADOR,
+    email: 'carlos@phoenyx.com',
+    location: 'Remote',
+    avatar: 'https://ui-avatars.com/api/?name=Carlos+Coder&background=2563eb&color=fff'
+  },
+  {
+    id: 'fin1',
+    name: 'Fernanda Money',
+    role: UserRole.FINANCEIRO,
+    email: 'fernanda@phoenyx.com',
+    location: 'Matriz',
+    avatar: 'https://ui-avatars.com/api/?name=Fernanda+Money&background=16a34a&color=fff'
   }
 ];
 

@@ -4,16 +4,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Wallet, Users, TrendingUp, AlertCircle, MapPin, UserPlus, Trophy, Cpu, ArrowRight } from 'lucide-react';
 import { InviteUserModal } from './InviteUserModal';
 import { OpportunityDetailsModal } from './OpportunityDetailsModal';
+import { UserManagement } from './UserManagement';
 
 interface AdminDashboardProps {
   opportunities: Opportunity[];
   commissions: CommissionRecord[];
   users: User[];
+  onUpdateUsers: (users: User[]) => void;
 }
 
 const COLORS = ['#ea580c', '#f97316', '#fb923c', '#fdba74'];
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ opportunities, commissions, users }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ opportunities, commissions, users, onUpdateUsers }) => {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedAnalysisOp, setSelectedAnalysisOp] = useState<Opportunity | null>(null);
 
@@ -225,8 +227,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ opportunities, c
                   {activeExecutives.every(u => !u.location) && <p className="text-gray-400 text-sm">Sem dados de localização.</p>}
                </div>
            </div>
-        </div>
+       </div>
       </div>
+      
+      {/* User Management Section */}
+      <UserManagement users={users} onUpdateUsers={onUpdateUsers} />
       
       <InviteUserModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
       

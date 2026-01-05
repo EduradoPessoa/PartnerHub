@@ -8,6 +8,7 @@ import {
   calculateCommissions, saveCommissions, loadCommissions 
 } from './services/mockData';
 import { User, Opportunity, UserRole, CommissionRecord, TimesheetEntry } from './types';
+import { Permissions } from './services/permissions';
 import { Dashboard } from './components/Dashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { OpportunityList } from './components/OpportunityList';
@@ -32,7 +33,10 @@ const Sidebar = ({ user, onLogout, collapsed, onToggleCollapse }: { user: User, 
     ? 'bg-gray-800 text-white shadow-lg transform scale-105' 
     : 'text-gray-400 hover:text-white hover:bg-gray-800/50';
 
-  const isStaff = user.role === UserRole.STAFF;
+  const isAdmin = user.role === UserRole.ADMIN;
+  const isFinance = user.role === UserRole.FINANCEIRO;
+  const isTechnical = [UserRole.ENGENHEIRO, UserRole.PROGRAMADOR, UserRole.STAFF].includes(user.role);
+  const isSales = [UserRole.EXECUTIVE, UserRole.EXECUTIVE_LIDER].includes(user.role);
 
   return (
     <div className={`hidden md:flex flex-col h-[96vh] ${collapsed ? 'w-20' : 'w-72'} bg-gray-900 rounded-3xl m-4 sticky top-4 shadow-2xl text-white overflow-hidden z-20`}>
@@ -51,13 +55,15 @@ const Sidebar = ({ user, onLogout, collapsed, onToggleCollapse }: { user: User, 
       </div>
       
       <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-4'} space-y-2 overflow-y-auto hide-scrollbar`}>
-        {user.role === UserRole.ADMIN && (
+        {(isAdmin || isFinance) && (
           <>
-             <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-2">Administração</p>
-             <Link to="/admin" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/admin')}`}>
-               <ShieldCheck size={22} className={location.pathname === '/admin' ? 'text-red-400' : ''} />
-               {!collapsed && <span className="font-medium">Visão Global</span>}
-             </Link>
+             <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-2">Financeiro</p>
+             {isAdmin && (
+               <Link to="/admin" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/admin')}`}>
+                 <ShieldCheck size={22} className={location.pathname === '/admin' ? 'text-red-400' : ''} />
+                 {!collapsed && <span className="font-medium">Visão Global</span>}
+               </Link>
+             )}
              <Link to="/finance" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/finance')}`}>
                <Wallet size={22} className={location.pathname === '/finance' ? 'text-green-400' : ''} />
                {!collapsed && <span className="font-medium">Contas a Pagar</span>}
@@ -72,7 +78,7 @@ const Sidebar = ({ user, onLogout, collapsed, onToggleCollapse }: { user: User, 
           {!collapsed && <span className="font-medium">Dashboard</span>}
         </Link>
         
-        {!isStaff && (
+        {(isAdmin || isSales) && (
             <Link to="/pipeline" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/pipeline')}`}>
               <Kanban size={22} className={location.pathname === '/pipeline' ? 'text-purple-400' : ''} />
               {!collapsed && <span className="font-medium">Pipeline</span>}
@@ -89,29 +95,29 @@ const Sidebar = ({ user, onLogout, collapsed, onToggleCollapse }: { user: User, 
           {!collapsed && <span className="font-medium">Agenda</span>}
         </Link>
 
-        {/* Timesheet - Visible for Staff and Admin */}
-        {(isStaff || user.role === UserRole.ADMIN) && (
+        {/* Timesheet - Visible for Technical and Admin */}
+        {(isTechnical || isAdmin) && (
             <Link to="/timesheet" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/timesheet')}`}>
               <Clock size={22} className={location.pathname === '/timesheet' ? 'text-pink-400' : ''} />
               {!collapsed && <span className="font-medium">Timesheet</span>}
             </Link>
         )}
 
-        {!isStaff && (
+        {(isAdmin || isSales) && (
             <Link to="/history" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/history')}`}>
               <History size={22} className={location.pathname === '/history' ? 'text-orange-400' : ''} />
               {!collapsed && <span className="font-medium">Histórico de Vendas</span>}
             </Link>
         )}
         
-        {!isStaff && (
+        {(isAdmin || isSales) && (
             <Link to="/new" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/new')}`}>
               <PlusCircle size={22} className={location.pathname === '/new' ? 'text-green-400' : ''} />
               {!collapsed && <span className="font-medium">Nova Oportunidade</span>}
             </Link>
         )}
 
-         {!isStaff && (
+         {(isAdmin || isSales) && (
              <>
                 <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-6">Institucional</p>
                 <Link to="/policies" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/policies')}`}>
@@ -228,6 +234,13 @@ const App: React.FC = () => {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pipelineExecId, setPipelineExecId] = useState<string>('ALL');
+  const [currentHash, setCurrentHash] = useState(window.location.hash);
+
+  useEffect(() => {
+    const handleHashChange = () => setCurrentHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Initial Data Fetch
   useEffect(() => {
@@ -280,6 +293,18 @@ const App: React.FC = () => {
     };
   }, [opportunities]); 
 
+  // Allow access to registration pages without login
+  if (currentHash.includes('#/register/')) {
+     return (
+        <Router>
+           <Routes>
+              <Route path="/register/staff" element={<RegisterStaff />} />
+              <Route path="/register/executive" element={<RegisterExecutive />} />
+           </Routes>
+        </Router>
+     );
+  }
+
   // Handle Login
   if (!currentUser) {
     return <Login onLogin={setCurrentUser} />;
@@ -297,9 +322,36 @@ const App: React.FC = () => {
       )
   }
 
-  const filteredOps = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.STAFF
-    ? opportunities 
-    : opportunities.filter(op => op.executiveId === currentUser.id);
+  const filteredOps = opportunities.filter(op => {
+    // 1. Admin & Engineering can view all
+    if (Permissions.canViewAllOpportunities(currentUser)) return true;
+    
+    // 2. Financeiro: View all (needs context for AP)
+    if (currentUser.role === UserRole.FINANCEIRO) return true;
+
+    // 3. Executives: Own
+    if (currentUser.role === UserRole.EXECUTIVE) {
+        return op.executiveId === currentUser.id;
+    }
+
+    // 4. Executive Leader: Own + Team
+    if (currentUser.role === UserRole.EXECUTIVE_LIDER) {
+        if (op.executiveId === currentUser.id) return true;
+        // Find the executive owner of this opportunity
+        const opOwner = users.find(u => u.id === op.executiveId);
+        // Check if their leader is the current user
+        return opOwner?.leaderId === currentUser.id;
+    }
+
+    // 5. Programmers: Assigned only (mock: none for now, or maybe they see all to unblock?)
+    // Let's hide for now as per "Projetos atribuídos" requirement.
+    if (currentUser.role === UserRole.PROGRAMADOR) return false; 
+    
+    // Legacy Staff fallback
+    if (currentUser.role === UserRole.STAFF) return true;
+
+    return false;
+  });
 
   const handleAddOrUpdateOpportunity = (op: Opportunity) => {
     let newOps = [];
@@ -396,14 +448,20 @@ const App: React.FC = () => {
             } />
             
             {currentUser.role === UserRole.ADMIN && (
-              <>
                  <Route path="/admin" element={
                     <AdminDashboard 
-                       opportunities={opportunities} 
-                       commissions={commissions} 
-                       users={users} 
+                      opportunities={opportunities} 
+                      commissions={commissions} 
+                      users={users}
+                      onUpdateUsers={(newUsers) => {
+                        setUsers(newUsers);
+                        saveUsers(newUsers);
+                      }}
                     />
                  } />
+            )}
+            
+            {(currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.FINANCEIRO) && (
                  <Route path="/finance" element={
                     <AccountsPayable 
                        opportunities={opportunities} 
@@ -412,9 +470,9 @@ const App: React.FC = () => {
                        onUpdateCommission={handleUpdateCommission}
                     />
                  } />
-              </>
             )}
 
+            {(currentUser.role === UserRole.ADMIN || [UserRole.EXECUTIVE, UserRole.EXECUTIVE_LIDER].includes(currentUser.role)) && (
             <Route path="/pipeline" element={
               <div className="space-y-6 animate-fade-in">
                  <div>
@@ -440,15 +498,16 @@ const App: React.FC = () => {
                    <div className="text-sm text-gray-500">Exibindo apenas suas oportunidades.</div>
                  )}
                  <PipelineBoard 
-                    opportunities={
+                   opportunities={
                       currentUser.role === UserRole.ADMIN && pipelineExecId !== 'ALL'
-                        ? opportunities.filter(o => o.executiveId === pipelineExecId)
+                        ? filteredOps.filter(o => o.executiveId === pipelineExecId)
                         : filteredOps
-                    } 
-                    onSelectOpportunity={setSelectedOpportunity} 
+                   }
+                   onSelectOpportunity={setSelectedOpportunity}
                  />
               </div>
             } />
+            )}
             <Route path="/opportunities" element={
               <OpportunityListWrapper 
                 opportunities={filteredOps}
@@ -459,12 +518,12 @@ const App: React.FC = () => {
               />
             } />
             <Route path="/calendar" element={
-               <ProjectCalendar opportunities={opportunities} currentUser={currentUser} />
+               <ProjectCalendar opportunities={filteredOps} currentUser={currentUser} />
             } />
             <Route path="/timesheet" element={
                <Timesheet 
                   entries={timesheetEntries} 
-                  opportunities={opportunities} 
+                  opportunities={filteredOps} 
                   currentUser={currentUser}
                   onAddEntry={handleAddTimesheetEntry}
                   onDeleteEntry={handleDeleteTimesheetEntry}
@@ -494,7 +553,7 @@ const App: React.FC = () => {
             } />
             <Route path="/edit/:id" element={
               <EditOpportunityWrapper 
-                 opportunities={opportunities} 
+                 opportunities={filteredOps} 
                  onSave={handleAddOrUpdateOpportunity}
                  user={currentUser}
               />
