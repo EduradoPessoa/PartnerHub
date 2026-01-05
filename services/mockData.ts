@@ -15,7 +15,7 @@ const MASTER_ADMIN: User = {
 
 // --- Default Data for Fallback/Init ---
 const DEFAULT_USERS: User[] = [
-  MASTER_ADMIN, // Garante que o Eduardo esteja nos dados padrão
+  MASTER_ADMIN,
   {
     id: 'admin1',
     name: 'Admin Demo',
@@ -24,106 +24,44 @@ const DEFAULT_USERS: User[] = [
     location: 'Matriz',
     avatar: 'https://ui-avatars.com/api/?name=Admin+Demo&background=0f172a&color=fff'
   },
-  {
-    id: 'lider1',
-    name: 'Roberto Director',
-    role: UserRole.EXECUTIVE_LIDER,
-    email: 'roberto@phoenyx.com',
-    location: 'Rio de Janeiro, RJ',
-    avatar: 'https://ui-avatars.com/api/?name=Roberto+Director&background=7c3aed&color=fff'
-  },
-  {
-    id: 'exec1',
-    name: 'João Vendedor',
-    role: UserRole.EXECUTIVE,
-    email: 'joao@phoenyx.com',
-    location: 'São Paulo, SP',
-    leaderId: 'lider1', // Linked to Roberto
-    avatar: 'https://ui-avatars.com/api/?name=Joao+Vendedor&background=ea580c&color=fff'
-  },
-  {
-    id: 'eng1',
-    name: 'Ana Tech',
-    role: UserRole.ENGENHEIRO,
-    email: 'ana@phoenyx.com',
-    location: 'Remote',
-    avatar: 'https://ui-avatars.com/api/?name=Ana+Tech&background=db2777&color=fff'
-  },
-  {
-    id: 'dev1',
-    name: 'Carlos Coder',
-    role: UserRole.PROGRAMADOR,
-    email: 'carlos@phoenyx.com',
-    location: 'Remote',
-    avatar: 'https://ui-avatars.com/api/?name=Carlos+Coder&background=2563eb&color=fff'
-  },
-  {
-    id: 'fin1',
-    name: 'Fernanda Money',
-    role: UserRole.FINANCEIRO,
-    email: 'fernanda@phoenyx.com',
-    location: 'Matriz',
-    avatar: 'https://ui-avatars.com/api/?name=Fernanda+Money&background=16a34a&color=fff'
-  }
+  // ... other defaults can remain if needed for initial seed
 ];
 
 // --- API Helpers ---
 
-// Vercel doesn't support PHP by default (unless configured with runtimes), so we'll switch to LocalStorage-only mode for now
-// to fix the 403/404 errors until a proper Node/Postgres backend is set up.
-const USE_LOCAL_STORAGE_ONLY = true;
+// Now using real API endpoints backed by Postgres
+const USE_LOCAL_STORAGE_ONLY = false;
 
 async function fetchFromApi<T>(endpoint: string): Promise<T[]> {
-  if (USE_LOCAL_STORAGE_ONLY) {
-      const local = localStorage.getItem(`phoenyx_${endpoint}`);
-      return local ? JSON.parse(local) : (endpoint === 'users' ? DEFAULT_USERS : []);
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}/index.php?endpoint=${endpoint}`);
-    if (!response.ok) throw new Error('Network response was not ok');
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+    if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
     
     let data = await response.json();
-    
-    if (!Array.isArray(data)) return [];
-
-    // --- SMART PARSING (Fix for SQL Backend) ---
-    // Se o backend retornar linhas do SQL com coluna 'json_data', precisamos fazer o parse.
-    const parsedData = data.map((item: any) => {
-        if (item && item.json_data && typeof item.json_data === 'string') {
-            try {
-                const parsed = JSON.parse(item.json_data);
-                // Mescla o ID da coluna SQL com o objeto JSON para garantir consistência
-                return { ...parsed, id: item.id || parsed.id };
-            } catch (e) {
-                console.warn("Failed to parse inner JSON for item:", item);
-                return item;
-            }
-        }
-        return item;
-    });
-
-    return parsedData;
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.warn(`Failed to fetch ${endpoint}, using fallback/local.`, error);
+    console.warn(`Failed to fetch ${endpoint} from API, falling back to local storage.`, error);
     const local = localStorage.getItem(`phoenyx_${endpoint}`);
-    return local ? JSON.parse(local) : (endpoint === 'users' ? DEFAULT_USERS : []);
+    // If users endpoint and no local data, return default users (seed)
+    if (endpoint === 'users' && !local) return DEFAULT_USERS;
+    return local ? JSON.parse(local) : [];
   }
 }
 
 async function saveToApi<T>(endpoint: string, data: T[]) {
-  // 1. Save locally first
+  // 1. Save locally as backup
   localStorage.setItem(`phoenyx_${endpoint}`, JSON.stringify(data));
-
-  if (USE_LOCAL_STORAGE_ONLY) return;
 
   // 2. Send to Backend
   try {
-    await fetch(`${API_BASE_URL}/index.php?endpoint=${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+    if (!response.ok) {
+        throw new Error(`Server returned ${response.status} ${response.statusText}`);
+    }
   } catch (error) {
     console.error(`Failed to sync ${endpoint} to server`, error);
   }
