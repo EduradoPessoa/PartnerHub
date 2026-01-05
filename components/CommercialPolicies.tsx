@@ -38,11 +38,11 @@ export const CommercialPolicies: React.FC = () => {
           <div className="space-y-4">
              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <h4 className="font-bold text-gray-900 text-sm mb-1">Padrão (Preferencial)</h4>
-                <p className="text-sm text-gray-600">50% na assinatura do contrato + 50% na entrega final.</p>
+                <p className="text-sm text-gray-600">34% de entrada + 33% em 30 dias + 33% em 60 dias.</p>
              </div>
              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <h4 className="font-bold text-gray-900 text-sm mb-1">Parcelado (Projetos &gt; 30k)</h4>
-                <p className="text-sm text-gray-600">Entrada de 30% + Saldo em até 3x (sujeito a aprovação financeira).</p>
+                <p className="text-sm text-gray-600">Entrada de 34% + Saldo em 2x de 33% (30/60 dias), sujeito a aprovação financeira.</p>
              </div>
           </div>
         </div>

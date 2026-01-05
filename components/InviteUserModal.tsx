@@ -1,46 +1,76 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Send, Copy, Mail, UserCog } from 'lucide-react';
-import { generateWelcomeEmail } from '../services/geminiService';
+import { X, Mail } from 'lucide-react';
 import { UserRole } from '../types';
+import { buildInviteEmail, mailtoHref } from '../services/emailService';
 
-interface InviteExecutiveModalProps {
+interface InviteUserModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const InviteExecutiveModal: React.FC<InviteExecutiveModalProps> = ({ isOpen, onClose }) => {
+export const InviteUserModal: React.FC<InviteUserModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.EXECUTIVE);
-  const [generatedEmail, setGeneratedEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleGenerate = async () => {
+  const handleSendEmail = async () => {
     if (!name || !email) return;
-    setLoading(true);
-    // Note: in a real app, generateWelcomeEmail would take the role to customize the message.
-    const content = await generateWelcomeEmail(name, email);
-    setGeneratedEmail(content);
-    setLoading(false);
-  };
 
-  const handleSendEmail = () => {
-    if (!email || !generatedEmail) return;
+    setIsSending(true);
+    setSendError(null);
 
-    const subject = encodeURIComponent("Bem-vindo ao Phoenyx Partner Hub");
-    const body = encodeURIComponent(generatedEmail);
+    const baseUrl = window.location.origin + window.location.pathname + '#';
+    const registrationLink =
+      role === UserRole.EXECUTIVE ? `${baseUrl}/register/executive` : `${baseUrl}/register/staff`;
     
-    // Open default mail client
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-    
-    // Reset and close
-    onClose();
-    setName('');
-    setEmail('');
-    setGeneratedEmail('');
-    setRole(UserRole.EXECUTIVE);
+    try {
+      const response = await fetch('/api/send-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          role: role === UserRole.EXECUTIVE ? 'EXECUTIVE' : 'STAFF',
+          registrationUrl: registrationLink,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Falha ao enviar e-mail');
+      }
+
+      // Success
+      alert('Convite enviado com sucesso!');
+      onClose();
+      setName('');
+      setEmail('');
+      setSendError(null);
+      setRole(UserRole.EXECUTIVE);
+    } catch (err: any) {
+      console.error(err);
+      setSendError(err.message || 'Erro ao enviar e-mail. Verifique se o backend está configurado.');
+      
+      // Fallback to mailto if API fails
+      if (confirm('O envio automático falhou (provavelmente por falta do backend local ou configuração). Deseja abrir o cliente de e-mail padrão?')) {
+        const content = buildInviteEmail({
+            name,
+            role: role === UserRole.EXECUTIVE ? 'EXECUTIVE' : 'STAFF',
+            registrationLink,
+          });
+        window.location.href = mailtoHref(email, content.subject, content.body);
+        onClose();
+      }
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -55,9 +85,8 @@ export const InviteExecutiveModal: React.FC<InviteExecutiveModalProps> = ({ isOp
         </div>
 
         <div className="p-8 overflow-y-auto">
-           {!generatedEmail ? (
              <div className="space-y-6">
-                <p className="text-gray-600">Preencha os dados para gerar um e-mail de boas-vindas personalizado.</p>
+                <p className="text-gray-600">Preencha os dados para enviar um convite automático via e-mail.</p>
                 
                 <div>
                    <label className="block text-sm font-bold text-gray-700 mb-2">Tipo de Usuário</label>
@@ -100,49 +129,21 @@ export const InviteExecutiveModal: React.FC<InviteExecutiveModalProps> = ({ isOp
                 </div>
 
                 <button 
-                  onClick={handleGenerate}
-                  disabled={loading || !name || !email}
+                  onClick={handleSendEmail}
+                  disabled={!name || !email || isSending}
                   className={`w-full py-4 rounded-xl font-bold text-white flex justify-center items-center gap-2 transition-all
-                    ${loading || !name || !email ? 'bg-gray-300 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 shadow-lg'}
+                    ${!name || !email || isSending ? 'bg-gray-300 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 shadow-lg'}
                   `}
                 >
-                  {loading ? 'Escrevendo E-mail...' : <><Sparkles size={18}/> Gerar Convite com IA</>}
+                  {isSending ? 'Enviando...' : 'Enviar Convite'}
                 </button>
-             </div>
-           ) : (
-             <div className="space-y-6">
-                <div className="bg-green-50 p-4 rounded-xl flex items-center gap-3 text-green-800 text-sm font-medium">
-                   <Sparkles size={16} />
-                   E-mail gerado com sucesso! Revise antes de enviar.
-                </div>
                 
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm font-mono text-gray-700 whitespace-pre-wrap h-64 overflow-y-auto">
-                   {generatedEmail}
-                </div>
-
-                <div className="flex gap-4">
-                   <button 
-                     onClick={() => { setGeneratedEmail(''); }}
-                     className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-colors"
-                   >
-                     Voltar
-                   </button>
-                   <button 
-                     onClick={() => navigator.clipboard.writeText(generatedEmail)}
-                     className="px-4 py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition-colors"
-                     title="Copiar Texto"
-                   >
-                      <Copy size={20} />
-                   </button>
-                   <button 
-                     onClick={handleSendEmail}
-                     className="flex-1 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-colors flex justify-center items-center gap-2"
-                   >
-                     <Send size={18} /> Abrir no E-mail
-                   </button>
-                </div>
+                {sendError && (
+                    <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                        {sendError}
+                    </div>
+                )}
              </div>
-           )}
         </div>
       </div>
     </div>

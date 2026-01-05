@@ -20,7 +20,7 @@ export const NewOpportunityForm: React.FC<NewOpportunityFormProps> = ({ executiv
     status: OpportunityStatus.TECHNICAL_ANALYSIS, // Default to Analysis
     temperature: 'WARM',
     notes: '',
-    paymentConditions: '50% Entrada / 50% Entrega'
+    paymentConditions: '34% entrada + 33% em 30 dias + 33% em 60 dias'
   });
 
   const [techBriefing, setTechBriefing] = useState('');
@@ -161,12 +161,12 @@ export const NewOpportunityForm: React.FC<NewOpportunityFormProps> = ({ executiv
         {/* Conditions */}
          <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Condição de Pagamento Proposta</label>
-            <input 
-              className="w-full bg-gray-50 border-none rounded-xl p-4 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
-              value={formData.paymentConditions}
-              onChange={e => setFormData({...formData, paymentConditions: e.target.value})}
-              placeholder="Ex: 50% Entrada / 50% Entrega"
-            />
+          <input 
+            className="w-full bg-gray-50 border-none rounded-xl p-4 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+            value={formData.paymentConditions}
+            onChange={e => setFormData({...formData, paymentConditions: e.target.value})}
+            placeholder="Ex: 34% entrada + 33% em 30 dias + 33% em 60 dias"
+          />
           </div>
 
         {initialData && (

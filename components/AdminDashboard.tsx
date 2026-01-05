@@ -228,7 +228,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ opportunities, c
         </div>
       </div>
       
-      <InviteExecutiveModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
+      <InviteUserModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
       
       {/* Hack: Use existing Modal but triggered from Admin Dashboard */}
       {selectedAnalysisOp && (

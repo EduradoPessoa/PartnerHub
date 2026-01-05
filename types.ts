@@ -29,6 +29,7 @@ export interface User {
   location?: string; // e.g. "São Paulo, SP"
   joinedAt?: string;
   pjDetails?: PjDetails;
+  staffSubRole?: 'ENGENHEIRO' | 'PROGRAMADOR' | 'ADMINISTRADOR' | 'FINANCEIRO';
 }
 
 export enum OpportunityStatus {

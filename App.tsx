@@ -21,6 +21,8 @@ import { SalesHistory } from './components/SalesHistory';
 import { Login } from './components/Login';
 import { ProjectCalendar } from './components/ProjectCalendar';
 import { Timesheet } from './components/Timesheet';
+import { RegisterStaff } from './components/RegisterStaff';
+import { RegisterExecutive } from './components/RegisterExecutive';
 
 // --- Layout Components ---
 
@@ -225,6 +227,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [pipelineExecId, setPipelineExecId] = useState<string>('ALL');
 
   // Initial Data Fetch
   useEffect(() => {
@@ -418,8 +421,30 @@ const App: React.FC = () => {
                     <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Pipeline de Vendas</h2>
                     <p className="text-gray-500 mt-1">Acompanhe a temperatura e o estágio das negociações.</p>
                  </div>
+                 {currentUser.role === UserRole.ADMIN && (
+                   <div className="flex items-center gap-3">
+                     <label className="text-sm font-bold text-gray-700">Executivo</label>
+                     <select
+                       className="bg-white border-none rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-gray-200"
+                       value={pipelineExecId}
+                       onChange={e => setPipelineExecId(e.target.value)}
+                     >
+                       <option value="ALL">Todos</option>
+                       {users.filter(u => u.role === UserRole.EXECUTIVE).map(u => (
+                         <option key={u.id} value={u.id}>{u.name}</option>
+                       ))}
+                     </select>
+                   </div>
+                 )}
+                 {currentUser.role !== UserRole.ADMIN && (
+                   <div className="text-sm text-gray-500">Exibindo apenas suas oportunidades.</div>
+                 )}
                  <PipelineBoard 
-                    opportunities={filteredOps} 
+                    opportunities={
+                      currentUser.role === UserRole.ADMIN && pipelineExecId !== 'ALL'
+                        ? opportunities.filter(o => o.executiveId === pipelineExecId)
+                        : filteredOps
+                    } 
                     onSelectOpportunity={setSelectedOpportunity} 
                  />
               </div>
@@ -474,6 +499,8 @@ const App: React.FC = () => {
                  user={currentUser}
               />
             } />
+            <Route path="/register/staff" element={<RegisterStaff />} />
+            <Route path="/register/executive" element={<RegisterExecutive />} />
           </Routes>
         </main>
         
