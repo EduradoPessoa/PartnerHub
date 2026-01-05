@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, PlusCircle, LogOut, Sparkles, PieChart, Settings, Bell, FileText, Kanban, Wallet, ShieldCheck, History, Calendar, Clock, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, PlusCircle, LogOut, PieChart, Settings, Bell, FileText, Kanban, Wallet, ShieldCheck, History, Calendar, Clock, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
   loadUsers, saveUsers, 
   loadOpportunities, saveOpportunities, 
@@ -12,7 +12,6 @@ import { Dashboard } from './components/Dashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { OpportunityList } from './components/OpportunityList';
 import { NewOpportunityForm } from './components/NewOpportunityForm';
-import { AIProposalModal } from './components/AIProposalModal';
 import { PipelineBoard } from './components/PipelineBoard';
 import { CommercialPolicies } from './components/CommercialPolicies';
 import { OpportunityDetailsModal } from './components/OpportunityDetailsModal';
@@ -25,7 +24,7 @@ import { Timesheet } from './components/Timesheet';
 
 // --- Layout Components ---
 
-const Sidebar = ({ user, onLogout }: { user: User, onLogout: () => void }) => {
+const Sidebar = ({ user, onLogout, collapsed, onToggleCollapse }: { user: User, onLogout: () => void, collapsed: boolean, onToggleCollapse: () => void }) => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path 
     ? 'bg-gray-800 text-white shadow-lg transform scale-105' 
@@ -34,83 +33,88 @@ const Sidebar = ({ user, onLogout }: { user: User, onLogout: () => void }) => {
   const isStaff = user.role === UserRole.STAFF;
 
   return (
-    <div className="hidden md:flex flex-col h-[96vh] w-72 bg-gray-900 rounded-3xl m-4 sticky top-4 shadow-2xl text-white overflow-hidden z-20">
-      <div className="p-8">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-900 font-black text-xl">
-            P.
+    <div className={`hidden md:flex flex-col h-[96vh] ${collapsed ? 'w-20' : 'w-72'} bg-gray-900 rounded-3xl m-4 sticky top-4 shadow-2xl text-white overflow-hidden z-20`}>
+      <div className={`p-8 ${collapsed ? 'p-6' : 'p-8'}`}>
+        <div className="flex items-center gap-3 justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-900 font-black text-xl">
+              P.
+            </div>
+            {!collapsed && <span className="font-bold text-xl tracking-tight">PHOENYX</span>}
           </div>
-          <span className="font-bold text-xl tracking-tight">PHOENYX</span>
+          <button onClick={onToggleCollapse} className="bg-gray-800 hover:bg-gray-700 rounded-xl p-2 transition-colors" title={collapsed ? 'Expandir menu' : 'Retrair menu'}>
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
       </div>
       
-      <nav className="flex-1 px-4 space-y-2 overflow-y-auto hide-scrollbar">
+      <nav className={`flex-1 ${collapsed ? 'px-2' : 'px-4'} space-y-2 overflow-y-auto hide-scrollbar`}>
         {user.role === UserRole.ADMIN && (
           <>
              <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-2">Administração</p>
-             <Link to="/admin" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/admin')}`}>
+             <Link to="/admin" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/admin')}`}>
                <ShieldCheck size={22} className={location.pathname === '/admin' ? 'text-red-400' : ''} />
-               <span className="font-medium">Visão Global</span>
+               {!collapsed && <span className="font-medium">Visão Global</span>}
              </Link>
-             <Link to="/finance" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/finance')}`}>
+             <Link to="/finance" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/finance')}`}>
                <Wallet size={22} className={location.pathname === '/finance' ? 'text-green-400' : ''} />
-               <span className="font-medium">Contas a Pagar</span>
+               {!collapsed && <span className="font-medium">Contas a Pagar</span>}
              </Link>
           </>
         )}
 
         <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">Gestão</p>
         
-        <Link to="/" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/')}`}>
+        <Link to="/" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/')}`}>
           <LayoutDashboard size={22} className={location.pathname === '/' ? 'text-brand-400' : ''} />
-          <span className="font-medium">Dashboard</span>
+          {!collapsed && <span className="font-medium">Dashboard</span>}
         </Link>
         
         {!isStaff && (
-            <Link to="/pipeline" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/pipeline')}`}>
+            <Link to="/pipeline" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/pipeline')}`}>
               <Kanban size={22} className={location.pathname === '/pipeline' ? 'text-purple-400' : ''} />
-              <span className="font-medium">Pipeline</span>
+              {!collapsed && <span className="font-medium">Pipeline</span>}
             </Link>
         )}
 
-        <Link to="/opportunities" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/opportunities')}`}>
+        <Link to="/opportunities" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/opportunities')}`}>
           <Users size={22} className={location.pathname === '/opportunities' ? 'text-blue-400' : ''} />
-          <span className="font-medium">Projetos / Clientes</span>
+          {!collapsed && <span className="font-medium">Projetos / Clientes</span>}
         </Link>
         
-        <Link to="/calendar" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/calendar')}`}>
+        <Link to="/calendar" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/calendar')}`}>
           <Calendar size={22} className={location.pathname === '/calendar' ? 'text-teal-400' : ''} />
-          <span className="font-medium">Agenda</span>
+          {!collapsed && <span className="font-medium">Agenda</span>}
         </Link>
 
         {/* Timesheet - Visible for Staff and Admin */}
         {(isStaff || user.role === UserRole.ADMIN) && (
-            <Link to="/timesheet" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/timesheet')}`}>
+            <Link to="/timesheet" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/timesheet')}`}>
               <Clock size={22} className={location.pathname === '/timesheet' ? 'text-pink-400' : ''} />
-              <span className="font-medium">Timesheet</span>
+              {!collapsed && <span className="font-medium">Timesheet</span>}
             </Link>
         )}
 
         {!isStaff && (
-            <Link to="/history" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/history')}`}>
+            <Link to="/history" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/history')}`}>
               <History size={22} className={location.pathname === '/history' ? 'text-orange-400' : ''} />
-              <span className="font-medium">Histórico de Vendas</span>
+              {!collapsed && <span className="font-medium">Histórico de Vendas</span>}
             </Link>
         )}
         
         {!isStaff && (
-            <Link to="/new" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/new')}`}>
+            <Link to="/new" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/new')}`}>
               <PlusCircle size={22} className={location.pathname === '/new' ? 'text-green-400' : ''} />
-              <span className="font-medium">Nova Oportunidade</span>
+              {!collapsed && <span className="font-medium">Nova Oportunidade</span>}
             </Link>
         )}
 
          {!isStaff && (
              <>
                 <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-6">Institucional</p>
-                <Link to="/policies" className={`flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${isActive('/policies')}`}>
+                <Link to="/policies" className={`flex items-center gap-4 ${collapsed ? 'px-3 py-3 justify-center' : 'px-4 py-4'} rounded-2xl transition-all duration-300 group ${isActive('/policies')}`}>
                  <FileText size={22} className={location.pathname === '/policies' ? 'text-yellow-400' : ''} />
-                 <span className="font-medium">Políticas</span>
+                 {!collapsed && <span className="font-medium">Políticas</span>}
                </Link>
              </>
          )}
@@ -122,9 +126,11 @@ const Sidebar = ({ user, onLogout }: { user: User, onLogout: () => void }) => {
           <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2 border-gray-700 relative z-10 object-cover" />
           <div className="flex-1 min-w-0 relative z-10">
             <p className="text-sm font-bold text-white truncate">{user.name}</p>
-            <Link to="/profile" className="text-xs text-gray-400 hover:text-white transition-colors block mt-0.5">
-              Ver Perfil
-            </Link>
+            {!collapsed && (
+              <Link to="/profile" className="text-xs text-gray-400 hover:text-white transition-colors block mt-0.5">
+                Ver Perfil
+              </Link>
+            )}
           </div>
           <button onClick={onLogout} className="relative z-10 text-gray-400 hover:text-red-400 transition-colors" title="Sair">
              <LogOut size={18} />
@@ -192,15 +198,6 @@ const OpportunityListWrapper: React.FC<{
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Lista de Clientes</h2>
           <p className="text-gray-500 mt-1">Visão tabular de todas as oportunidades.</p>
         </div>
-        {currentUser.role !== UserRole.STAFF && (
-            <button 
-              onClick={() => document.dispatchEvent(new CustomEvent('open-ai-modal'))}
-              className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-soft hover:shadow-lg hover:bg-black transition-all transform hover:-translate-y-1"
-            >
-              <Sparkles size={18} className="text-yellow-300" />
-              <span className="font-semibold">Assistente IA</span>
-            </button>
-        )}
       </div>
       <OpportunityList 
         opportunities={opportunities} 
@@ -226,9 +223,8 @@ const App: React.FC = () => {
   const [commissions, setCommissions] = useState<CommissionRecord[]>([]);
   
   const [isLoading, setIsLoading] = useState(false);
-  
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Initial Data Fetch
   useEffect(() => {
@@ -271,16 +267,12 @@ const App: React.FC = () => {
   }, [currentUser]); // Re-run when user logs in
 
   React.useEffect(() => {
-    const handleOpenAI = () => setIsAIModalOpen(true);
-    document.addEventListener('open-ai-modal', handleOpenAI);
-    
     const handleUpdateEvent = (e: CustomEvent<Opportunity>) => {
         handleAddOrUpdateOpportunity(e.detail);
     };
     document.addEventListener('update-opportunity', handleUpdateEvent as EventListener);
 
     return () => {
-        document.removeEventListener('open-ai-modal', handleOpenAI);
         document.removeEventListener('update-opportunity', handleUpdateEvent as EventListener);
     };
   }, [opportunities]); 
@@ -365,7 +357,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="bg-[#f3f4f6] min-h-screen text-gray-800 font-sans flex flex-col md:flex-row">
-        <Sidebar user={currentUser} onLogout={handleLogout} />
+        <Sidebar user={currentUser} onLogout={handleLogout} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)} />
         <MobileHeader onLogout={handleLogout} />
 
         <main className="flex-1 p-4 md:p-8 md:pt-8 min-h-screen overflow-y-auto hide-scrollbar">
@@ -484,21 +476,6 @@ const App: React.FC = () => {
             } />
           </Routes>
         </main>
-        
-        {currentUser.role !== UserRole.STAFF && (
-            <button 
-                onClick={() => setIsAIModalOpen(true)}
-                className="md:hidden fixed bottom-6 right-6 bg-gray-900 text-white p-4 rounded-full shadow-2xl z-50 hover:scale-110 transition-transform"
-            >
-              <Sparkles size={24} className="text-yellow-300" />
-            </button>
-        )}
-
-        <AIProposalModal 
-          isOpen={isAIModalOpen} 
-          onClose={() => setIsAIModalOpen(false)}
-          executiveName={currentUser.name}
-        />
         
         <OpportunityDetailsModal 
           opportunity={selectedOpportunity} 
