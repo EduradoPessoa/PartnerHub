@@ -36,7 +36,16 @@ const DEFAULT_USERS: User[] = [
 
 // --- API Helpers ---
 
+// Vercel doesn't support PHP by default (unless configured with runtimes), so we'll switch to LocalStorage-only mode for now
+// to fix the 403/404 errors until a proper Node/Postgres backend is set up.
+const USE_LOCAL_STORAGE_ONLY = true;
+
 async function fetchFromApi<T>(endpoint: string): Promise<T[]> {
+  if (USE_LOCAL_STORAGE_ONLY) {
+      const local = localStorage.getItem(`phoenyx_${endpoint}`);
+      return local ? JSON.parse(local) : (endpoint === 'users' ? DEFAULT_USERS : []);
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/index.php?endpoint=${endpoint}`);
     if (!response.ok) throw new Error('Network response was not ok');
@@ -72,6 +81,8 @@ async function fetchFromApi<T>(endpoint: string): Promise<T[]> {
 async function saveToApi<T>(endpoint: string, data: T[]) {
   // 1. Save locally first
   localStorage.setItem(`phoenyx_${endpoint}`, JSON.stringify(data));
+
+  if (USE_LOCAL_STORAGE_ONLY) return;
 
   // 2. Send to Backend
   try {
