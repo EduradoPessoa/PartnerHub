@@ -1,8 +1,9 @@
 import { Resend } from 'resend';
 
-// Initialize Resend with the API key from environment variables
-// Note: In Vercel, this variable must be set in the Project Settings.
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with the API key from environment variables or fallback to the provided key
+// Note: In production, always prefer environment variables.
+const apiKey = process.env.RESEND_API_KEY || 're_K6DgMr5T_89GhgRJMgdwteuLMDTV2MvDo';
+const resend = new Resend(apiKey);
 
 export default async function handler(request: Request) {
   if (request.method !== 'POST') {
